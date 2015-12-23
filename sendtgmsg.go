@@ -17,23 +17,26 @@ var Config Configuration
 
 func checkError(e error) {
 	if e != nil {
-		panic(e)
+		fmt.Println(e.Error())
 	}
 }
 
 func getConfig() {
 	raw, err := ioutil.ReadFile(os.Getenv("HOME") + "/.config/sendtgmsg.json")
-	checkError(err)
+	if err != nil {
+		panic(err)
+	}
 	json.Unmarshal(raw, &Config)
 }
 
 func main() {
+
 	getConfig()
+
 	var bytes []byte
 	var err error
 	stat, _ := os.Stdin.Stat()
 	if (stat.Mode() & os.ModeCharDevice) == 0 {
-		fmt.Println("data is being piped to stdin")
 		bytes, err = ioutil.ReadAll(os.Stdin)
 		checkError(err)
 	} else {
@@ -46,9 +49,41 @@ func main() {
 
 	bot, err := golegram.NewBot(Config.TelegramBotToken)
 	if err == nil {
-		bot.SendMessage(Config.TelegramUserId, string(bytes))
+
+		s := splitter(string(bytes))
+		for _, piece := range s {
+			msg, err := bot.SendMessage(Config.TelegramUserId, piece)
+			if err != nil {
+				fmt.Println(err)
+				fmt.Println(msg)
+			}
+		}
 	} else {
 		fmt.Println(err.Error())
 	}
 }
 
+/**
+
+ */
+func splitter(inputStr string) []string {
+	a := []rune(inputStr)
+
+	stringLength := len(a)
+	maxChars := 600
+	amountOfSplits := (stringLength / maxChars)
+
+	s := make([]string, amountOfSplits+1)
+
+	for j := 0; j <= amountOfSplits; j++ {
+
+		if j*maxChars < stringLength-maxChars {
+			composed := string(a[j*maxChars : (j+1)*maxChars])
+			s[j] = composed
+		} else {
+			s[j] = string(a[j*maxChars : stringLength])
+		}
+	}
+
+	return s
+}
