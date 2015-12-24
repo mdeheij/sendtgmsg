@@ -30,9 +30,7 @@ func getConfig() {
 }
 
 func main() {
-
 	getConfig()
-
 	var bytes []byte
 	var err error
 	stat, _ := os.Stdin.Stat()
@@ -63,14 +61,11 @@ func main() {
 	}
 }
 
-/**
-
- */
 func splitter(inputStr string) []string {
 	a := []rune(inputStr)
 
 	stringLength := len(a)
-	maxChars := 600
+	maxChars := 4000
 	amountOfSplits := (stringLength / maxChars)
 
 	s := make([]string, amountOfSplits+1)
